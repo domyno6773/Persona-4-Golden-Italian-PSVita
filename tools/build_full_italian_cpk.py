@@ -8,6 +8,7 @@ import cricodecs.cpk as cpk
 
 from build_vita_cmptable import build_localized_cmptable
 from build_vita_fcltable import build_localized_fcltable
+from build_vita_bf import transplant_bf, transplant_bmd
 from build_vita_textures import (
     build_localized_title_spr,
     build_localized_press_button_tmx,
@@ -201,6 +202,26 @@ def merge_general_data(v_bytes, pc_bytes, name=''):
 
     if is_texture(name):
         return v_bytes
+
+    if name.lower().endswith('.bf') or (len(v_bytes) > 12 and v_bytes[8:12] == b'FLW0'):
+        if len(pc_bytes) > 12 and pc_bytes[8:12] == b'FLW0':
+            try:
+                return transplant_bf(v_bytes, pc_bytes)
+            except Exception as e:
+                print(f"Warning: transplant_bf failed for {name}: {e}")
+                return v_bytes
+        return v_bytes
+
+    if name.lower().endswith('.bmd') or (len(v_bytes) > 12 and v_bytes[8:12] == b'MSG1'):
+        if len(pc_bytes) > 12 and pc_bytes[8:12] == b'MSG1':
+            try:
+                loc_bmd, _, _ = transplant_bmd(v_bytes, pc_bytes)
+                return loc_bmd
+            except Exception as e:
+                print(f"Warning: transplant_bmd failed for {name}: {e}")
+                return v_bytes
+        return v_bytes
+
     return replace_accents_safe(pc_bytes)
 
 

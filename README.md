@@ -3,7 +3,7 @@
 ![Platform](https://img.shields.io/badge/Platform-PS%20Vita-blue.svg)
 ![Game](https://img.shields.io/badge/Game-Persona%204%20Golden-yellow.svg)
 ![Title ID](https://img.shields.io/badge/Title%20ID-PCSB00245%20(EU)-green.svg)
-![Version](https://img.shields.io/badge/Release-v1.0.0-orange.svg)
+![Version](https://img.shields.io/badge/Release-v1.0.1-orange.svg)
 ![Language](https://img.shields.io/badge/Language-Italiano-red.svg)
 [![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/domyno6773)
 
@@ -49,8 +49,8 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
 
 ### Metodo Rapido (Drag & Drop via USB / FTP)
 
-1. Vai nella sezione **[Releases](../../releases)** di questo repository e scarica gli archivi della versione **v1.0.0**:
-   - `P4G_Italian_Patch_v1.0.0.zip` (Testi, texture, interfaccia ed eseguibile patchato)
+1. Vai nella sezione **[Releases](../../releases)** di questo repository e scarica gli archivi:
+   - `P4G_Italian_Patch_v1.0.1.zip` (Testi, texture, interfaccia ed eseguibile patchato - Hotfix incluso)
    - `P4G_Italian_Movies_v1.0.0.zip` (26 filmati con sottotitoli italiani a 960x544)
 2. Avvia **VitaShell** sulla tua PS Vita e premi **SELECT** per collegare la console al PC tramite cavo USB (oppure connettiti via client FTP).
 3. Estrai entrambi i file `.zip` direttamente nella memoria della console:
@@ -64,13 +64,26 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
            └── data/
                ├── data.cpk
                └── movie/
-                   ├── P4_001.mp4
-                   ├── P4_002.mp4
+                   ├── P4CT001.mp4
+                   ├── P4CT002.mp4
                    ├── ...
-                   └── P4_026.mp4
+                   └── P4CT041.mp4
    ```
 5. Premi **Cerchio** su VitaShell per disconnettere la console.
 6. Avvia **Persona 4 Golden** dalla LiveArea e goditi l'avventura interamente in italiano!
+
+---
+
+## 📝 Changelog
+
+### v1.0.1 (Hotfix)
+- **Risolto il crash `C2-12828-1` nella stanza del protagonista a casa Dojima (sera dell'11 aprile e visite successive)**:
+  - Il crash era dovuto a chiamate e istruzioni FlowScript PC introdotte da Atlus nell'update 2023 (Salvataggio rapido / Album) non presenti nel motore PS Vita 2012.
+  - Implementato `build_vita_bf.py` che preserva al 100% il bytecode e le procedure native di PS Vita su tutti i 1.091 script di gioco (`.bf`), innestandovi dinamicamente l'intera traduzione italiana ufficiale.
+  - Compatibilità e stabilità verificate su hardware reale sia per PS Vita che per PlayStation TV (PSTV).
+
+### v1.0.0
+- Rilascio iniziale con testi, filmati, grafica e audio/video ottimizzati per PS Vita.
 
 ---
 
