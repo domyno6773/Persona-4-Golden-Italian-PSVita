@@ -5,6 +5,7 @@
 ![Title ID](https://img.shields.io/badge/Title%20ID-PCSB00245%20(EU)-green.svg)
 ![Version](https://img.shields.io/badge/Release-v1.0.0-orange.svg)
 ![Language](https://img.shields.io/badge/Language-Italiano-red.svg)
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/domyno6773)
 
 Patch di traduzione italiana completa e definitiva per **Persona 4 Golden** su **PlayStation Vita (edizione europea PCSB00245)**.
 
@@ -115,6 +116,16 @@ Se desideri rigenerare i file di traduzione autonomamente partendo dal gioco ori
   - 34 messaggi modali di rete e PSN tradotti.
   - Prompt di conferma e inserimento nomi localizzati.
   - 38 titoli dei programmi della guida TV tradotti.
+
+---
+
+## ☕ Supporta il Progetto
+
+Se apprezzi questo lavoro di traduzione e ottimizzazione per PS Vita e desideri supportare lo sviluppo di futuri progetti homebrew e traduzioni, puoi lasciare una donazione libera tramite PayPal:
+
+[![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white&style=for-the-badge)](https://www.paypal.com/paypalme/domyno6773)
+
+Ogni contributo è sinceramente apprezzato! ❤️
 
 ---
 
