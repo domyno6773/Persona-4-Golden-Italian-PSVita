@@ -1,0 +1,28 @@
+# Large game assets
+*.cpk
+*.bin
+*.elf
+*.spr
+*.tmx
+*.mp4
+*.zip
+*.7z
+*.rar
+*.tar.gz
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
