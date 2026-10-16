@@ -14,103 +14,62 @@ ACCENT_MAP = {
 }
 
 def replace_accents_safe(data):
-    if not any(seq in data for seq in ACCENT_MAP):
-        return data
-    out = bytearray(data)
-    for seq, repl in ACCENT_MAP.items():
-        pos = 0
-        while True:
-            idx = out.find(seq, pos)
-            if idx == -1:
-                break
-            w_start = max(0, idx - 30)
-            w_end = min(len(out), idx + 32)
-            window = out[w_start:w_end]
-            ascii_count = sum(1 for b in window if (32 <= b <= 126) or b == 10)
-            if ascii_count >= 5:
-                out[idx : idx + 2] = repl
-            pos = idx + 2
+    """Convert glyphs in a text buffer without changing function arguments."""
+    out = bytearray()
+    pos = 0
+    while pos < len(data):
+        first = data[pos]
+        if 0xf0 <= first <= 0xff:
+            size = 2 * (first & 15)
+            if size < 2 or pos + size > len(data):
+                raise ValueError('Invalid message function')
+            out += data[pos:pos+size]
+        elif first >= 0x80:
+            size = 2
+            glyph = data[pos:pos+2]
+            if len(glyph) != 2:
+                raise ValueError('Truncated message glyph')
+            out += ACCENT_MAP.get(glyph, glyph)
+        else:
+            size = 1
+            out.append(first)
+        pos += size
     return bytes(out)
 
 def encode_reloc(addressLocations, addressBaseOffset=0):
-    ADDRESS_SIZE = 4
-    SEQ_LOOP = 0xF8
-    SEQ_BASE = 0x07
-    SEQ_BASE_NUM_LOOP = 2
-    SEQ_MAX_NUM_LOOP = 33
-
-    sequences = {}
-    i = 0
-    while i < len(addressLocations):
-        if i + 1 == len(addressLocations):
-            break
-        if addressLocations[i + 1] - addressLocations[i] == ADDRESS_SIZE:
-            start_idx = i
-            count = 2
-            i += 1
-            while i + 1 < len(addressLocations) and (addressLocations[i + 1] - addressLocations[i] == ADDRESS_SIZE):
-                count += 1
-                i += 1
-            if count > 2:
-                sequences[start_idx] = count
-        i += 1
-
-    relocationTable = bytearray()
-    prevRelocSum = 0
-
-    def encode_address(reloc):
-        nonlocal prevRelocSum
-        if (reloc & 0x01) == 0:
-            newReloc = reloc >> 1
-            if newReloc <= 0xFF:
-                relocationTable.append(newReloc)
-            else:
-                relocLo = (reloc & 0xFF) + 1
-                relocHi = (reloc & 0xFF00) >> 8
-                relocationTable.append(relocLo)
-                relocationTable.append(relocHi)
+    # A delta for every pointer avoids the old run-length encoder's invalid
+    # one-address remainder after runs of 34, 67, ... additional pointers.
+    out = bytearray()
+    previous = addressBaseOffset
+    for address in addressLocations:
+        delta = address - previous
+        if delta < 0 or delta % 4 or delta > 0xfffc:
+            raise ValueError(f'Unrepresentable relocation delta: {delta}')
+        if delta <= 0x1fc:
+            out.append(delta >> 1)
         else:
-            relocLo = (reloc & 0xFF) + 1
-            relocHi = (reloc & 0xFF00) >> 8
-            relocationTable.append(relocLo)
-            relocationTable.append(relocHi)
-        prevRelocSum += reloc
-
-    addr_idx = 0
-    while addr_idx < len(addressLocations):
-        if addr_idx not in sequences:
-            reloc = addressLocations[addr_idx] - prevRelocSum - addressBaseOffset
-            encode_address(reloc)
-            addr_idx += 1
-        else:
-            seq_count = sequences[addr_idx]
-            reloc = addressLocations[addr_idx] - prevRelocSum - addressBaseOffset
-            encode_address(reloc)
-            num_remaining = seq_count - 1
-            while num_remaining > 0:
-                to_add = min(num_remaining, SEQ_MAX_NUM_LOOP)
-                loop = to_add - SEQ_BASE_NUM_LOOP
-                code = (loop << 3) | SEQ_BASE
-                relocationTable.append(code)
-                addr_idx += to_add
-                prevRelocSum += to_add * ADDRESS_SIZE
-                num_remaining -= to_add
-            addr_idx += 1
-
-    return bytes(relocationTable)
+            out.extend(((delta & 255) + 1, delta >> 8))
+        previous = address
+    return bytes(out)
 
 def parse_bmd(bmd_bytes):
-    if len(bmd_bytes) < 32:
-        return {'user_id': 0, 'version': 2, 'dialogs': [], 'speakers': []}
+    if len(bmd_bytes) < 32 or bmd_bytes[8:12] != b'MSG1':
+        raise ValueError('Expected MSG1 message script')
     file_type, fmt, user_id, file_size = struct.unpack('<BBhI', bmd_bytes[:8])
     magic = bmd_bytes[8:12]
     ext_size, rel_off, rel_sz, dlg_cnt = struct.unpack('<IIII', bmd_bytes[12:28])
     is_rel, version = struct.unpack('<hh', bmd_bytes[28:32])
+    if file_size > len(bmd_bytes) or 48 + dlg_cnt*8 > file_size:
+        raise ValueError('Invalid MSG1 size or dialog table')
+    if is_rel or ext_size:
+        raise ValueError('Relocated or extended MSG1 is unsupported')
 
     dialogs = []
     for i in range(dlg_cnt):
         kind, offset = struct.unpack('<II', bmd_bytes[32 + i*8 : 32 + (i+1)*8])
         dlg_pos = 32 + offset
+        if kind not in (0, 1) or dlg_pos < 48+dlg_cnt*8 or dlg_pos+28 > file_size:
+            raise ValueError('Invalid dialog kind or offset')
         if kind == 0:
             name = bmd_bytes[dlg_pos : dlg_pos + 24].split(b'\x00')[0].decode('latin1', errors='ignore')
             page_count, speaker_id = struct.unpack('<hH', bmd_bytes[dlg_pos + 24 : dlg_pos + 28])
@@ -133,6 +92,7 @@ def parse_bmd(bmd_bytes):
                 'text_buf': text_buf,
                 'dlg_offset': offset,
             })
+
         elif kind == 1:
             name = bmd_bytes[dlg_pos : dlg_pos + 24].split(b'\x00')[0].decode('latin1', errors='ignore')
             ext, opt_cnt, pattern, reserved = struct.unpack('<hhhh', bmd_bytes[dlg_pos + 24 : dlg_pos + 32])
@@ -154,6 +114,13 @@ def parse_bmd(bmd_bytes):
                 'dlg_offset': offset,
             })
 
+        d = dialogs[-1]
+        addresses = d.get('page_addrs', d.get('opt_addrs', []))
+        if addresses:
+            text_start = offset + (32 if kind == 0 else 36) + len(addresses)*4
+            if any(not text_start <= a < text_start+len(d['text_buf']) for a in addresses):
+                raise ValueError('Message page pointer outside text buffer')
+
     spk_hdr_pos = 32 + dlg_cnt * 8
     spk_arr_off, spk_cnt, ext_data_off, spk_res = struct.unpack('<IIII', bmd_bytes[spk_hdr_pos : spk_hdr_pos + 16])
     
@@ -163,6 +130,8 @@ def parse_bmd(bmd_bytes):
         for off in spk_offsets:
             p = 32 + off
             end = bmd_bytes.find(b'\x00', p)
+            if end < p or end >= file_size:
+                raise ValueError('Invalid speaker string')
             speakers.append(bmd_bytes[p:end])
 
     return {
@@ -184,17 +153,21 @@ def transplant_bmd(vita_bmd_bytes, pc_bmd_bytes):
     pc_dialogs_by_name = {}
     for d in p_parsed['dialogs']:
         name = d['name']
-        if name not in pc_dialogs_by_name:
-            pc_dialogs_by_name[name] = d
+        pc_dialogs_by_name.setdefault((name, d['kind']), []).append(d)
 
     new_dialogs = []
     transplanted_count = 0
     kept_count = 0
+    new_speakers = list(v_parsed['speakers'])
 
     for vd in v_parsed['dialogs']:
         v_name = vd['name']
-        if v_name in pc_dialogs_by_name:
-            pd = pc_dialogs_by_name[v_name]
+        candidates = pc_dialogs_by_name.get((v_name, vd['kind']), [])
+        pd = candidates.pop(0) if candidates else None
+        # Native scripts branch on the selection's original option numbers.
+        if pd and vd['kind'] == 1 and vd['option_count'] != pd['option_count']:
+            pd = None
+        if pd:
             new_d = dict(vd)
             new_d['kind'] = pd['kind']
             new_d['text_buf'] = replace_accents_safe(pd['text_buf'])
@@ -202,13 +175,14 @@ def transplant_bmd(vita_bmd_bytes, pc_bmd_bytes):
             p_dlg_off = pd.get('dlg_offset', 0)
             if pd['kind'] == 0:
                 new_d['page_count'] = pd['page_count']
-                new_d['speaker_id'] = pd['speaker_id']
+                # Speaker indices belong to the Vita table, including variable
+                # speakers (0x8000+) and the no-speaker sentinel (0xffff).
+                vs, ps = vd['speaker_id'], pd['speaker_id']
+                if vs < len(new_speakers) and ps < len(p_parsed['speakers']):
+                    new_speakers[vs] = replace_accents_safe(p_parsed['speakers'][ps])
                 new_d['page_addrs'] = [pa - p_dlg_off for pa in pd['page_addrs']]
             elif pd['kind'] == 1:
                 new_d['option_count'] = pd['option_count']
-                new_d['pattern'] = pd['pattern']
-                new_d['ext'] = pd.get('ext', 0)
-                new_d['reserved'] = pd.get('reserved', 0)
                 new_d['opt_addrs'] = [oa - p_dlg_off for oa in pd['opt_addrs']]
 
             new_dialogs.append(new_d)
@@ -223,14 +197,8 @@ def transplant_bmd(vita_bmd_bytes, pc_bmd_bytes):
             new_dialogs.append(new_d)
             kept_count += 1
 
-    new_speakers = []
-    if len(p_parsed['speakers']) == len(v_parsed['speakers']):
-        for s in p_parsed['speakers']:
-            new_speakers.append(replace_accents_safe(s))
-    else:
-        new_speakers = v_parsed['speakers']
-
     loc_bmd = build_bmd_relative(new_dialogs, new_speakers, v_parsed['user_id'], v_parsed['version'])
+    parse_bmd(loc_bmd)
     return loc_bmd, transplanted_count, kept_count
 
 def build_bmd_relative(dialogs, speakers, user_id=0, version=2):
@@ -270,8 +238,8 @@ def build_bmd_relative(dialogs, speakers, user_id=0, version=2):
                 curr_pos += 4
                 new_page_addrs.append(dlg_addr + rel)
 
-            curr_pos += 4
-            curr_pos += len(d['text_buf'])
+            if page_cnt > 0:
+                curr_pos += 4 + len(d['text_buf'])
 
             data = bytearray()
             data += name_bytes
@@ -367,61 +335,87 @@ def build_bmd_relative(dialogs, speakers, user_id=0, version=2):
 
     return bytes(out)
 
-def transplant_bf(v_bf_bytes, p_bf_bytes):
-    if len(v_bf_bytes) < 32 or v_bf_bytes[8:12] != b'FLW0':
-        return v_bf_bytes
-    if len(p_bf_bytes) < 32 or p_bf_bytes[8:12] != b'FLW0':
-        return v_bf_bytes
+def read_sections(data, magic):
+    if len(data) < 32 or data[8:12] != magic:
+        raise ValueError(f'Expected {magic!r} container')
+    count = struct.unpack_from('<I', data, 16)[0]
+    if 32+count*16 > len(data):
+        raise ValueError('Section table outside file')
+    result = [struct.unpack_from('<IIII', data, 32+i*16) for i in range(count)]
+    for _, size, n, off in result:
+        if off+size*n > len(data):
+            raise ValueError('Section outside file')
+    return result
 
-    v_sec_cnt = struct.unpack('<I', v_bf_bytes[0x10:0x14])[0]
-    p_sec_cnt = struct.unpack('<I', p_bf_bytes[0x10:0x14])[0]
 
-    v_sec3_idx = -1
-    v_sec4_idx = -1
-    for i in range(v_sec_cnt):
-        st = struct.unpack('<I', v_bf_bytes[0x20 + i*16 : 0x20 + i*16 + 4])[0]
-        if st == 3: v_sec3_idx = i
-        elif st == 4: v_sec4_idx = i
+def transplant_section(vita, pc, magic, message_kind):
+    """Leave native absolute pointers intact, even inside opaque PMD1 chunks.
 
-    p_sec3_idx = -1
-    for i in range(p_sec_cnt):
-        st = struct.unpack('<I', p_bf_bytes[0x20 + i*16 : 0x20 + i*16 + 4])[0]
-        if st == 3: p_sec3_idx = i
+    Reuse the original message slot when it fits. Otherwise append an aligned
+    message section and update its descriptor; no other section moves.
+    """
+    vs = read_sections(vita, magic)
+    ps = read_sections(pc, magic)
+    for index, (kind, size, count, offset) in enumerate(vs):
+        if kind != message_kind or not size*count:
+            continue
+        source = next((s for s in ps if s[0] == message_kind), None)
+        if source is None or not source[1]*source[2]:
+            return vita
+        _, ss, sc, so = source
+        localized, _, _ = transplant_bmd(vita[offset:offset+size*count], pc[so:so+ss*sc])
+        out = bytearray(vita)
+        padded = localized + b'\0' * (-len(localized) % 16)
+        if len(padded) <= size*count:
+            out[offset:offset+size*count] = padded.ljust(size*count, b'\0')
+            target = offset
+        else:
+            out.extend(b'\0' * (-len(out) % 16))
+            target = len(out)
+            out.extend(padded)
+        descriptor = 32+index*16
+        if magic == b'FLW0':
+            struct.pack_into('<IIII', out, descriptor, kind, 1, len(localized), target)
+        else:
+            struct.pack_into('<IIII', out, descriptor, kind, len(padded), 1, target)
+        struct.pack_into('<I', out, 4, len(out))
+        return bytes(out)
+    return vita
 
-    if v_sec3_idx == -1 or p_sec3_idx == -1:
-        return v_bf_bytes
 
-    _, _, v_s3_cnt, v_s3_off = struct.unpack('<IIII', v_bf_bytes[0x20 + v_sec3_idx*16 : 0x20 + (v_sec3_idx+1)*16])
-    v_bmd = v_bf_bytes[v_s3_off : v_s3_off + v_s3_cnt]
-
-    _, _, p_s3_cnt, p_s3_off = struct.unpack('<IIII', p_bf_bytes[0x20 + p_sec3_idx*16 : 0x20 + (p_sec3_idx+1)*16])
-    p_bmd = p_bf_bytes[p_s3_off : p_s3_off + p_s3_cnt]
-
-    if len(v_bmd) == 0 or len(p_bmd) == 0:
-        return v_bf_bytes
-
-    loc_bmd, trans_cnt, kept_cnt = transplant_bmd(v_bmd, p_bmd)
-
-    v_sec4_data = b''
-    if v_sec4_idx != -1:
-        _, _, v_s4_cnt, v_s4_off = struct.unpack('<IIII', v_bf_bytes[0x20 + v_sec4_idx*16 : 0x20 + (v_sec4_idx+1)*16])
-        v_sec4_data = v_bf_bytes[v_s4_off : v_s4_off + v_s4_cnt]
-
-    out_hdr = bytearray(v_bf_bytes[:v_s3_off])
-    out_hdr[0x20 + v_sec3_idx*16 + 8 : 0x20 + v_sec3_idx*16 + 12] = struct.pack('<I', len(loc_bmd))
-
-    new_sec4_off = v_s3_off + len(loc_bmd)
-    if v_sec4_idx != -1:
-        out_hdr[0x20 + v_sec4_idx*16 + 12 : 0x20 + v_sec4_idx*16 + 16] = struct.pack('<I', new_sec4_off)
-
-    new_file_sz = new_sec4_off + len(v_sec4_data)
-    out_hdr[4:8] = struct.pack('<I', new_file_sz)
-
-    out = bytearray(out_hdr)
-    out += loc_bmd
-    out += v_sec4_data
-
-    pad = (64 - (len(out) % 64)) % 64
-    out += b'\x00' * pad
-
+def transplant_bf(vita, pc):
+    vs, ps = read_sections(vita, b'FLW0'), read_sections(pc, b'FLW0')
+    vm = next((s for s in vs if s[0] == 3), None)
+    pm = next((s for s in ps if s[0] == 3), None)
+    strings = next((s for s in vs if s[0] == 4), None)
+    if not vm or not pm or not vm[1]*vm[2] or not pm[1]*pm[2]:
+        return vita
+    if not strings or strings[3] != vm[3]+vm[1]*vm[2]:
+        raise ValueError('Unsupported BF section order')
+    _,size,count,offset=vm
+    _,psize,pcount,poffset=pm
+    localized,_,_=transplant_bmd(vita[offset:offset+size*count],pc[poffset:poffset+psize*pcount])
+    # Retail Vita BFs put messages before the string section and declare the
+    # beginning of that section as FileSize. Do not append duplicate messages
+    # or change that retail size convention.
+    out=bytearray(vita[:offset])+localized
+    string_start=len(out)
+    out += vita[strings[3]:strings[3]+strings[1]*strings[2]]
+    for index,section in enumerate(vs):
+        if section[0]==3:struct.pack_into('<IIII',out,32+index*16,3,1,len(localized),offset)
+        elif section[0]==4:struct.pack_into('<IIII',out,32+index*16,*strings[:3],string_start)
+    struct.pack_into('<I',out,4,string_start)
+    # Archive-level padding is supplied by its enclosing container, not by BF.
     return bytes(out)
+
+
+def transplant_pm1(vita, pc):
+    # This retail event omits a final 16-byte record/padding present in the
+    # declared size on both platforms. Materialize it before appending data.
+    def complete(data):
+        declared = struct.unpack_from('<I', data, 4)[0]
+        if len(data) < declared <= len(data)+16:
+            return data.ljust(declared, b'\0')
+        return data
+    vita, pc = complete(vita), complete(pc)
+    return transplant_section(vita, pc, b'PMD1', 6)

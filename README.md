@@ -3,11 +3,13 @@
 ![Platform](https://img.shields.io/badge/Platform-PS%20Vita-blue.svg)
 ![Game](https://img.shields.io/badge/Game-Persona%204%20Golden-yellow.svg)
 ![Title ID](https://img.shields.io/badge/Title%20ID-PCSB00245%20(EU)-green.svg)
-![Version](https://img.shields.io/badge/Release-v1.0.1-orange.svg)
+![Version](https://img.shields.io/badge/Release-v1.0.5-orange.svg)
 ![Language](https://img.shields.io/badge/Language-Italiano-red.svg)
 [![Donate with PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal&logoColor=white)](https://www.paypal.com/paypalme/domyno6773)
 
-Patch di traduzione italiana completa e definitiva per **Persona 4 Golden** su **PlayStation Vita (edizione europea PCSB00245)**.
+Patch amatoriale di traduzione italiana per **Persona 4 Golden** su **PlayStation Vita (edizione europea PCSB00245)**.
+
+> **v1.0.5: hotfix confermata sulla console.** La prima battaglia nella nebbia si avvia, i messaggi di sistema sono in italiano e i comandi di battaglia si visualizzano correttamente anche quando selezionati. Include tutte le correzioni di compatibilità delle versioni precedenti. Leggere le [note v1.0.5](release_notes_v1.0.5.md). La prova riguarda queste funzioni; il gioco completo non è stato verificato.
 
 Il progetto porta su console portatile l'intera localizzazione italiana ufficiale realizzata da **Atlus / SEGA** per la versione PC (Steam), integrando correzioni ad hoc per l'hardware della PS Vita, filmati sottotitolati in italiano a risoluzione nativa e texture rielaborate a mano.
 
@@ -15,9 +17,10 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
 
 ## 🎮 Caratteristiche della Mod
 
-- **Testi e Dialoghi al 100% in Italiano**: Storia principale, tutti i Social Link, richieste secondarie, lezioni ed esami scolastici, descrizioni di abilità, oggetti, equipaggiamento e Personae.
-- **Tutti i 26 Filmati con Sottotitoli in Italiano**: I filmati animati e le cutscene parlate sono stati estratti, sottotitolati con la traduzione ufficiale e ricodificati alla risoluzione nativa della PS Vita (**960x544**, H.264 Main Profile @ Level 4.0, AAC Stereo), garantendo massima nitidezza e sincronizzazione labiale perfetta.
+- **Testi e Dialoghi in Italiano**: Storia principale, tutti i Social Link, richieste secondarie, lezioni ed esami scolastici, descrizioni di abilità, oggetti, equipaggiamento e Personae.
+- **Tutti i 26 Filmati con Sottotitoli in Italiano**: I filmati animati e le cutscene parlate sono stati estratti, sottotitolati con la traduzione ufficiale e ricodificati alla risoluzione nativa della PS Vita (**960x544**, H.264 Main Profile @ Level 4.0, AAC Stereo).
 - **Interfaccia Grafica e Texture 2D Riadattate**:
+  - Comandi di battaglia italiani: Attacco, Abilità, Guardia, Analisi, Tattiche, Oggetti e Fuga, comprese le varianti selezionate.
   - Menu di Salvataggio e Caricamento (`mcPanel.arc`): indicatori di slot, data, livello e tempo di gioco.
   - HUD di gioco: giorni della settimana, orari e comandi del diario/cronologia dialoghi.
   - Indicatore di avanzamento veloce ("SALTA" con icona pristine SELECT).
@@ -30,7 +33,7 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
   - Traduzione dei prompt di conferma sistema e inserimento Nome/Cognome.
   - Traduzione dei titoli di tutte le trasmissioni e dei nomi dei canali TV.
 - **Ottimizzazione Hardware PS Vita**:
-  - Corretta codifica a 8bpp e 4bpp CLUT con palette swizzling specifico per la GPU PowerVR di PS Vita, azzerando qualsiasi artefatto o glitch visivo.
+  - Corretta codifica a 8bpp e 4bpp CLUT con palette swizzling specifico per la GPU PowerVR di PS Vita.
   - Compatibilità totale con salvataggi preesistenti della versione europea.
 
 ---
@@ -41,7 +44,7 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
 2. Copia originale di **Persona 4 Golden (Edizione Europea - Title ID: `PCSB00245`)**, installata in formato digitale o cartuccia fisica.
 3. Plugin **`rePatch`** (consigliato `rePatch reLoaded` o `rePatch v3.0`) installato e configurato in `ur0:tai/config.txt`.
 4. Plugin **`0syscall6`** (o `NoNpDrm`) per abilitare l'avvio di file e moduli decrittati.
-5. Circa **2.6 GB** di spazio libero sulla scheda di memoria della PS Vita (`ux0:`).
+5. Circa **2.8 GB** di spazio libero sulla scheda di memoria della PS Vita (`ux0:`).
 
 ---
 
@@ -49,12 +52,13 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
 
 ### Metodo Rapido (Drag & Drop via USB / FTP)
 
-1. Vai nella sezione **[Releases](../../releases)** di questo repository e scarica gli archivi:
-   - `P4G_Italian_Patch_v1.0.1.zip` (Testi, texture, interfaccia ed eseguibile patchato - Hotfix incluso)
-   - `P4G_Italian_Movies_v1.0.0.zip` (26 filmati con sottotitoli italiani a 960x544)
+1. Scarica **entrambi i ZIP** dalla [release v1.0.5](https://github.com/domyno6773/Persona-4-Golden-Italian-PSVita/releases/tag/v1.0.5):
+   - [P4G_Italian_Patch_v1.0.5.zip](https://github.com/domyno6773/Persona-4-Golden-Italian-PSVita/releases/download/v1.0.5/P4G_Italian_Patch_v1.0.5.zip): dati corretti, menu di battaglia ed eseguibile italiani.
+   - [P4G_Italian_Movies_v1.0.5.zip](https://github.com/domyno6773/Persona-4-Golden-Italian-PSVita/releases/download/v1.0.5/P4G_Italian_Movies_v1.0.5.zip): tutti i 26 filmati sottotitolati a 960×544. I filmati sono gli stessi della v1.0.0; chi li ha già installati può aggiornare solo la patch.
+   - `SHA256SUMS.txt` contiene i checksum dei due archivi. I due ZIP si estraggono normalmente: non sono volumi di un archivio diviso.
 2. Avvia **VitaShell** sulla tua PS Vita e premi **SELECT** per collegare la console al PC tramite cavo USB (oppure connettiti via client FTP).
-3. Estrai entrambi i file `.zip` direttamente nella memoria della console:
-   - Trascina la cartella `rePatch` contenuta nei pacchetti nella radice della partizione **`ux0:`**.
+3. Estrai entrambi i file `.zip` sul PC nella stessa cartella:
+   - Copia la cartella `rePatch` risultante nella radice della partizione **`ux0:`**, unendo le cartelle e sostituendo i file della patch precedente. Non sostituire i file originali in `app/PCSB00245`.
 4. Verifica che la struttura delle cartelle sulla PS Vita corrisponda esattamente a quanto segue:
    ```text
    ux0:
@@ -76,11 +80,23 @@ Il progetto porta su console portatile l'intera localizzazione italiana ufficial
 
 ## 📝 Changelog
 
+### v1.0.5
+- Tradotte 31 etichette nel pannello di combattimento, comprese le varianti evidenziate dei comandi.
+- Conservati dimensioni, palette, metadati e icone della texture Vita originale.
+- Confermati sulla console: avvio del primo combattimento nella nebbia, messaggi di sistema italiani e comandi di battaglia, anche selezionati.
+
+### v1.0.4
+- Corretto l'allineamento a 32 byte dei membri ARC che causava il blocco o crash entrando nella prima battaglia.
+
+### v1.0.3
+- Ripristinati i contenitori e gli asset nativi Vita per modelli, effetti e audio di battaglia.
+- Corrette le tabelle, i messaggi e i metadati CPK, mantenendo il bytecode Vita e adattando i soli testi.
+
 ### v1.0.1 (Hotfix)
 - **Risolto il crash `C2-12828-1` nella stanza del protagonista a casa Dojima (sera dell'11 aprile e visite successive)**:
   - Il crash era dovuto a chiamate e istruzioni FlowScript PC introdotte da Atlus nell'update 2023 (Salvataggio rapido / Album) non presenti nel motore PS Vita 2012.
   - Implementato `build_vita_bf.py` che preserva al 100% il bytecode e le procedure native di PS Vita su tutti i 1.091 script di gioco (`.bf`), innestandovi dinamicamente l'intera traduzione italiana ufficiale.
-  - Compatibilità e stabilità verificate su hardware reale sia per PS Vita che per PlayStation TV (PSTV).
+  - La conferma dei blocchi segnalati richiede una prova su console; vedere le note v1.0.2.
 
 ### v1.0.0
 - Rilascio iniziale con testi, filmati, grafica e audio/video ottimizzati per PS Vita.
@@ -96,7 +112,7 @@ Se desideri rigenerare i file di traduzione autonomamente partendo dal gioco ori
    git clone https://github.com/domyno6773/Persona-4-Golden-Italian-PSVita.git
    cd Persona-4-Golden-Italian-PSVita
    ```
-2. Installa i requisiti Python (consigliato Python 3.10+):
+2. Installa i requisiti Python (consigliato Python 3.11+):
    ```bash
    pip install pillow cricodecs
    ```
@@ -104,13 +120,12 @@ Se desideri rigenerare i file di traduzione autonomamente partendo dal gioco ori
    - `clean_vita_data.cpk` (il file `data.cpk` estratto dalla tua copia Vita)
    - `Persona 4 Golden/data_it.cpk` (il file dati della versione PC Steam con lingua italiana)
    - `E:/FAGDec/app/PCSB00245/eboot.bin.elf` (l'ELF decrittato tramite FAGDec)
-4. Esegui gli script di generazione:
+4. Per la correzione attuale del menu servono anche la build locale v1.0.4 gia' verificata, nella relativa cartella `P4G_Italian_Patch_v1.0.4`, e il suo eseguibile italiano. Le istruzioni della build precedente sono nelle [note v1.0.4](release_notes_v1.0.4.md). Esegui:
    ```bash
-   # 1. Patcha e firma l'eseguibile PS Vita
-   python tools/patch_vita_eboot.py
-
-   # 2. Genera il pacchetto dati data.cpk localizzato
-   python tools/build_full_italian_cpk.py
+   python tools/build_battle_menu_hotfix.py
+   python tools/verify_stability_hotfix.py --patch P4G_Italian_Patch_v1.0.5/rePatch/PCSB00245/data/data.cpk --report P4G_Italian_Patch_v1.0.5/verification_report.json
+   python tools/package_stability_hotfix.py --folder P4G_Italian_Patch_v1.0.5
+   python tools/package_complete_release.py
    ```
 
 ---

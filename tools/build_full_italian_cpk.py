@@ -8,7 +8,8 @@ import cricodecs.cpk as cpk
 
 from build_vita_cmptable import build_localized_cmptable
 from build_vita_fcltable import build_localized_fcltable
-from build_vita_bf import transplant_bf, transplant_bmd
+from build_vita_bf import transplant_bf, transplant_bmd, transplant_pm1
+from build_vita_tables import transplant_table, transplant_bvp, transplant_item_names, transplant_cmm_table
 from build_vita_textures import (
     build_localized_title_spr,
     build_localized_press_button_tmx,
@@ -63,9 +64,16 @@ def parse_arc(data):
     return files
 
 def build_arc(files_dict):
+    """Write the Vita ARC member sizes including their native 32-byte padding.
+
+    The loader finds the next header by adding this stored size. A shortened
+    BF/BMD must therefore retain its padding, or subsequent binary structures
+    and their relocation words can start at unaligned addresses.
+    """
     out = bytearray()
     out += struct.pack('<I', len(files_dict))
     for name, b in files_dict.items():
+        b = b + b'\x00' * (-len(b) % 32)
         nb = name.encode('latin1').ljust(32, b'\x00')
         out += nb
         out += len(b).to_bytes(4, 'little')
@@ -203,26 +211,38 @@ def merge_general_data(v_bytes, pc_bytes, name=''):
     if is_texture(name):
         return v_bytes
 
+    lower = name.lower()
+    if v_bytes[8:12] == b'PMD1' and pc_bytes[8:12] == b'PMD1':
+        return transplant_pm1(v_bytes, pc_bytes)
+    if lower.endswith('.tbl'):
+        if lower.endswith(('aicalc.tbl', 'msg.tbl', 'encount.tbl')):
+            return transplant_table(v_bytes, pc_bytes, name)
+        return v_bytes
+    if lower.endswith('.bvp'):
+        return transplant_bvp(v_bytes, pc_bytes)
+    if lower.endswith('itemtbl.bin'):
+        return transplant_item_names(v_bytes, pc_bytes)
+    if lower.endswith('.bed') or lower.endswith('dummy.dat'):
+        return v_bytes
+
     if name.lower().endswith('.bf') or (len(v_bytes) > 12 and v_bytes[8:12] == b'FLW0'):
         if len(pc_bytes) > 12 and pc_bytes[8:12] == b'FLW0':
-            try:
-                return transplant_bf(v_bytes, pc_bytes)
-            except Exception as e:
-                print(f"Warning: transplant_bf failed for {name}: {e}")
-                return v_bytes
+            return transplant_bf(v_bytes, pc_bytes)
         return v_bytes
 
     if name.lower().endswith('.bmd') or (len(v_bytes) > 12 and v_bytes[8:12] == b'MSG1'):
         if len(pc_bytes) > 12 and pc_bytes[8:12] == b'MSG1':
-            try:
-                loc_bmd, _, _ = transplant_bmd(v_bytes, pc_bytes)
-                return loc_bmd
-            except Exception as e:
-                print(f"Warning: transplant_bmd failed for {name}: {e}")
-                return v_bytes
+            loc_bmd, _, _ = transplant_bmd(v_bytes, pc_bytes)
+            return loc_bmd
         return v_bytes
 
-    return replace_accents_safe(pc_bytes)
+    if lower.startswith('cmm') and lower.endswith('.dat'):
+        return transplant_cmm_table(v_bytes, pc_bytes, lower)
+
+    # The PC localization archive also contains models, audio, packed panels
+    # and gameplay data. Unknown formats must stay native, including when the
+    # two platforms use different container types for the same filename.
+    return v_bytes
 
 
 def main():

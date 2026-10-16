@@ -880,6 +880,7 @@ def build_localized_channel_main(v_arc_bytes, p_arc_bytes):
 def build_localized_lesson_pack(v_pac_bytes, p_pac_bytes):
     print("Building localized title/lesson.pack (Edogawa Lessons)...")
     from build_full_italian_cpk import parse_pac, build_pac, parse_arc, build_arc, replace_accents_safe
+    from build_vita_bf import transplant_bmd
     v_files, v_order = parse_pac(v_pac_bytes)
     p_files, _ = parse_pac(p_pac_bytes)
     
@@ -907,7 +908,7 @@ def build_localized_lesson_pack(v_pac_bytes, p_pac_bytes):
             v_arc = parse_arc(v_files[fn])
             p_arc = parse_arc(p_files[fn])
             if 'lesson.bmd' in p_arc:
-                v_arc['lesson.bmd'] = replace_accents_safe(p_arc['lesson.bmd'])
+                v_arc['lesson.bmd'] = transplant_bmd(v_arc['lesson.bmd'], p_arc['lesson.bmd'])[0]
             v_files[fn] = build_arc(v_arc)
             
     return build_pac(v_files, v_order)
@@ -915,6 +916,7 @@ def build_localized_lesson_pack(v_pac_bytes, p_pac_bytes):
 def build_localized_art_ch_arc(v_arc_bytes, p_arc_bytes):
     print("Building localized title/artCh.arc (Art Gallery)...")
     from build_full_italian_cpk import parse_arc, build_arc, replace_accents_safe
+    from build_vita_bf import transplant_bmd
     v_files = parse_arc(v_arc_bytes)
     p_files = parse_arc(p_arc_bytes)
     
@@ -943,7 +945,7 @@ def build_localized_art_ch_arc(v_arc_bytes, p_arc_bytes):
         
     v_files['artTitle.spr'] = bytes(v_spr)
     if 'artCh.bmd' in p_files:
-        v_files['artCh.bmd'] = replace_accents_safe(p_files['artCh.bmd'])
+        v_files['artCh.bmd'] = transplant_bmd(v_files['artCh.bmd'], p_files['artCh.bmd'])[0]
         
     return build_arc(v_files)
 
@@ -1074,6 +1076,7 @@ def build_localized_live_ch_arc(v_arc_bytes, p_arc_bytes):
 def build_localized_anim_ch_arc(v_arc_bytes, p_arc_bytes):
     print("Building localized title/animCh.arc (Persona Animation)...")
     from build_full_italian_cpk import parse_arc, build_arc, replace_accents_safe
+    from build_vita_bf import transplant_bmd
     v_files = parse_arc(v_arc_bytes)
     p_files = parse_arc(p_arc_bytes)
     
@@ -1101,13 +1104,14 @@ def build_localized_anim_ch_arc(v_arc_bytes, p_arc_bytes):
         
     v_files['peraniland_01spr.spr'] = bytes(v_spr)
     if 'animCh.bmd' in p_files:
-        v_files['animCh.bmd'] = replace_accents_safe(p_files['animCh.bmd'])
+        v_files['animCh.bmd'] = transplant_bmd(v_files['animCh.bmd'], p_files['animCh.bmd'])[0]
         
     return build_arc(v_files)
 
 def build_localized_quiz_arc(v_arc_bytes, p_arc_bytes):
     print("Building localized title/quiz.arc (Quiz in-game)...")
     from build_full_italian_cpk import parse_arc, build_arc, replace_accents_safe
+    from build_vita_bf import transplant_bmd
     v_files = parse_arc(v_arc_bytes)
     p_files = parse_arc(p_arc_bytes)
     
@@ -1137,6 +1141,6 @@ def build_localized_quiz_arc(v_arc_bytes, p_arc_bytes):
     
     for bmd_name in ['msg_quiz.bmd', 'msg_quiz_system.bmd', 'msg_quiz_answer.bmd']:
         if bmd_name in p_files:
-            v_files[bmd_name] = replace_accents_safe(p_files[bmd_name])
+            v_files[bmd_name] = transplant_bmd(v_files[bmd_name], p_files[bmd_name])[0]
             
     return build_arc(v_files)
